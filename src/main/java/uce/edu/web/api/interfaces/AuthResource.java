@@ -1,56 +1,42 @@
 package uce.edu.web.api.interfaces;
 
-import java.time.Instant;
-import java.util.Set;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import uce.edu.web.api.application.AuthService;
+import uce.edu.web.api.representation.LoginRequest;
+import uce.edu.web.api.representation.LoginResponse;
+import uce.edu.web.api.representation.RegisterRequest;
+import uce.edu.web.api.representation.UserRepresentation;
 
-import io.smallrye.jwt.build.Jwt;
-import jakarta.ws.rs.DefaultValue;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.QueryParam;
-
+@Path("/auth")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class AuthResource {
+    @Inject
+    AuthService authService;
 
-       @GET
-    @Path("/token")
-    public TokenResponse token(
-            @QueryParam("user") @DefaultValue("estudiante1") String user,
-            @QueryParam("password") @DefaultValue("password") String password
-    )
-    
-    //Donde se compara el password recibido con el password almacenado en la base de datos
-        // Lógica de autenticación (verificar usuario y contraseña)
-        // Aquí se asume que la autenticación es exitosa para simplificar
-        
-    
-    {
-        String issuer = "matricula-auth";
-        long ttl = 3600;
- 
-        Instant now = Instant.now();
-        Instant exp = now.plusSeconds(ttl);
- 
-        String jwt = Jwt.issuer(issuer)
-                .subject(user)
-                .groups(Set.of(role))     // roles: user / admin
-                .issuedAt(now)
-                .expiresAt(exp)
-                .sign();
- 
-        return new TokenResponse(jwt, exp.getEpochSecond(), role);
-    }
-
-       public static class TokenResponse {
-        public String accessToken;
-        public long expiresAt;
-        public String role;
- 
-        public TokenResponse() {}
-        public TokenResponse(String accessToken, long expiresAt, String role) {
-            this.accessToken = accessToken;
-            this.expiresAt = expiresAt;
-            this.role = role;
+    @POST
+    @Path("/login")
+    public Response login(LoginRequest request) {
+        try {
+            LoginResponse resp = authService.login(request);
+            return Response.ok(resp).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.UNAUTHORIZED).entity(e.getMessage()).build();
         }
     }
 
+    @POST
+    @Path("/register")
+    public Response register(RegisterRequest request) {
+        try {
+            UserRepresentation user = authService.register(request);
+            return Response.status(Response.Status.CREATED).entity(user).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+        }
+    }
 }
+
