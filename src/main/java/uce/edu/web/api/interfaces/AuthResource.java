@@ -19,6 +19,7 @@ public class AuthResource {
 
     @POST
     @Path("/login")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response login(LoginRequest request) {
         try {
             LoginResponse resp = authService.login(request);
@@ -30,6 +31,7 @@ public class AuthResource {
 
     @POST
     @Path("/register")
+    @Produces(MediaType.APPLICATION_JSON)
     public Response register(RegisterRequest request) {
         try {
             UserRepresentation user = authService.register(request);
